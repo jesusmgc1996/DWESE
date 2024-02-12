@@ -7,6 +7,8 @@ use App\Models\User;
 use App\Http\Requests\CarRequest;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Request;
 
 class CarController extends Controller
 {
@@ -42,13 +44,14 @@ class CarController extends Controller
             $car->model = $request->model;
             $car->year = $request->year;
             $car->last_revision_date = $request->last_revision_date;
-            $photoName = time() . "-" . $request->file('photo')->getClientOriginalName();
-            $car->photo = $photoName;
             $car->price = $request->price;
             $car->user_id = Auth::id();
-            $car->save();
 
+            $photoName = time() . "-" . $request->file('photo')->getClientOriginalName();
+            $car->photo = $photoName;
             $request->file('photo')->storeAs('public/img_car', $photoName);
+
+            $car->save();
 
             return to_route('car.index')->with('status', 'Coche añadido correctamente');
         } catch (QueryException $e) {
@@ -77,15 +80,15 @@ class CarController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(CarRequest $request, Car $car)
+    public function update(Request $request, Car $car)
     {
         $request->validate([
-            'plate' => 'required | unique:cars',
+            'plate' => 'required | unique:cars,plate,' . $car->id . ',id,deleted_at,NULL',
             'brand' => 'required',
             'model' => 'required',
             'year' => 'required | integer',
             'last_revision_date' => 'required | date',
-            'photo' => 'required | image',
+            'photo' => 'image',
             'price' => 'required | numeric'
         ]);
 
@@ -95,13 +98,16 @@ class CarController extends Controller
             $car->model = $request->model;
             $car->year = $request->year;
             $car->last_revision_date = $request->last_revision_date;
-            $photoName = time() . "-" . $request->file('photo')->getClientOriginalName();
-            $car->photo = $photoName;
             $car->price = $request->price;
-            $car->user_id = Auth::id();
-            $car->save();
 
-            $request->file('photo')->storeAs('public/img_car', $photoName);
+            if (is_uploaded_file($request->file('photo'))) {
+                Storage::delete('public/img_car/' . $car->photo);
+                $photoName = time() . "-" . $request->file('photo')->getClientOriginalName();
+                $car->photo = $photoName;
+                $request->file('photo')->storeAs('public/img_car', $photoName);
+            }
+
+            $car->save();
 
             return to_route('car.index')->with('status', 'Coche modificado correctamente');
         } catch (QueryException $e) {
@@ -114,6 +120,12 @@ class CarController extends Controller
      */
     public function destroy(Car $car)
     {
-        return "BORRAR";
+        try {
+            $car->delete();
+
+            return to_route('car.index')->with('status', 'Coche borrado correctamente');
+        } catch (QueryException $e) {
+            return to_route('car.index')->with('status', 'Error en la base de datos');
+        }
     }
 }

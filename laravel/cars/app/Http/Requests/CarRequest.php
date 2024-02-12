@@ -22,7 +22,7 @@ class CarRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'plate' => 'required | unique:cars',
+            'plate' => 'required | unique:cars,plate,NULL,id,deleted_at,NULL',
             'brand' => 'required',
             'model' => 'required',
             'year' => 'required | integer',
