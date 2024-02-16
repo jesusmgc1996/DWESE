@@ -139,5 +139,6 @@
                 @endforeach
             </tbody>
         </table>
+        {{ $cars->links() }}
     </div>
 </div>
