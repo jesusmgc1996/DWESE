@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ProfileUpdateRequest extends FormRequest
@@ -14,10 +15,10 @@ class ProfileUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'dni' => ['required', 'string', 'min:9', 'max:9', 'unique:users,dni,NULL,id,deleted_at,NULL'],
+            'dni' => ['required', 'string', 'min:9', 'max:9', 'unique:users,dni,' . $this->user()->id . ',id,deleted_at,NULL'],
             'name' => ['required', 'string', 'max:255'],
             'surname' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,NULL,id,deleted_at,NULL'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,' . $this->user()->id . ',id,deleted_at,NULL'],
         ];
     }
 
